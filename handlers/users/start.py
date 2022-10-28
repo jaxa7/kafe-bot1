@@ -5,16 +5,20 @@ from aiogram.dispatcher.filters.builtin import CommandStart
 
 from data.config import ADMINS
 from loader import dp, db, bot
+from keyboards.default.main_menu import asosiy
+from aiogram.dispatcher import FSMContext
 
 
-@dp.message_handler(CommandStart())
-async def bot_start(message: types.Message):
+@dp.message_handler(CommandStart(), state="*")
+async def bot_start(message: types.Message, state: FSMContext):
+    await state.finish()
     name = message.from_user.full_name
+    
     # Foydalanuvchini bazaga qo'shamiz
     try:
         db.add_user(id=message.from_user.id,
                     name=name)
-        await message.answer(f"Xush kelibsiz! {name}")
+        await message.answer(f"Xush kelibsiz! {name}", reply_markup=asosiy)
         # Adminga xabar beramiz
         count = db.count_users()[0]
         msg = f"{message.from_user.full_name} bazaga qo'shildi.\nBazada {count} ta foydalanuvchi bor."
@@ -22,4 +26,4 @@ async def bot_start(message: types.Message):
 
     except sqlite3.IntegrityError as err:
         await bot.send_message(chat_id=ADMINS[0], text=f"{name} bazaga oldin qo'shilgan")
-        await message.answer(f"Xush kelibsiz! {name}")
+        await message.answer(f"Xush kelibsiz! {name}", reply_markup=asosiy)
